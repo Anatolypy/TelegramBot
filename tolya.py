@@ -1,32 +1,30 @@
-from telegram.ext import Application, CommandHandler
-from telegram import ReplyKeyboardMarkup
-import logging
+import telebot
+from telebot import types
 
-BOT_TOKEN = '6979060436:AAF9J29cBCUadUi5dp2Dq7g1HUzr1CzdKtc'
-
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.DEBUG)
-
-logger = logging.getLogger(__name__)
-
-reply_keyboard = [['/help']]
-markup = ReplyKeyboardMarkup(reply_keyboard, one_time_keyboard=False)
+bot = telebot.TeleBot('6979060436:AAF9J29cBCUadUi5dp2Dq7g1HUzr1CzdKtc')
 file = open('phrases.txt', encoding='utf-8')
+f = file.read()
+newf = f.split("\n")
 
 
-async def help(update, context):
-    await update.message.reply_text(file.readlines()[1])
+@bot.message_handler(commands=['start'])
+def main(message):
+    bot.send_message(message.chat.id, f'Привет {message.from_user.first_name} {message.from_user.last_name}')
+    bot.send_message(message.chat.id, newf[0])
+    bot.register_next_step_handler(message, test)
 
 
-async def start(update, context):
-    await update.message.reply_text(file.readlines()[0], reply_markup=markup)
+def test(message):
+    if message.text.lower() == 'нет':
+        bot.send_message(message.chat.id, 'Ну хорошо, до скорого')
+    else:
+        bot.send_photo(message.chat.id,
+                       'https://thumbs.dreamstime.com/b/egg-roll-spring-roll-popiah-vietnamese-cuisine-thai-style-sweet-suace-wooden-table-71117155.jpg')
 
 
-def main():
-    application = Application.builder().token(BOT_TOKEN).build()
-    application.add_handler(CommandHandler("help", help))
-    application.add_handler(CommandHandler("start", start))
-    application.run_polling()
+@bot.message_handler(commands=['help'])
+def main(message):
+    bot.send_message(message.chat.id, 'Я пока не могу помогать')
 
 
-if __name__ == '__main__':
-    main()
+bot.polling(none_stop=True)
