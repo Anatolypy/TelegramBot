@@ -12,9 +12,6 @@ newf = f.split("\n")
 @bot.message_handler(commands=['start'])
 def main(message):
     bot.send_message(message.chat.id, f'Привет {message.from_user.first_name} {message.from_user.last_name}')
-    con = sqlite3.connect('project.sqlite')
-    cur = con.cursor()
-    cur.execute(f"""UPDATE accounts SET ID = '{message.from_user.id}', name = {message.from_user.first_name}""").fetchall()
     bot.send_message(message.chat.id, newf[0])
     bot.register_next_step_handler(message, test1)
 
@@ -31,7 +28,7 @@ def test1(message):
         markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
         markup.add(btn1, btn2)
         markup.add(btn3, btn4)
-        bot.send_message(message.chat.id, newf[2], reply_markup=markup)
+        bot.send_photo(message.chat.id, photo="https://i.artfile.ru/3000x2000_811359_%5Bwww.ArtFile.ru%5D.jpg", caption=newf[2], reply_markup=markup)
         bot.register_next_step_handler(message, test2)
 
 
@@ -43,7 +40,7 @@ def test2(message):
     markup.add(btn1)
     markup.add(btn2)
     markup.add(btn3)
-    bot.send_message(message.chat.id, newf[3], reply_markup=markup)
+    bot.send_photo(message.chat.id, photo="https://thenewsgod.com/wp-content/uploads/2021/08/load-image-2021-08-01T115912.108.jpeg", caption=newf[3], reply_markup=markup)
     bot.register_next_step_handler(message, test3)
 
 
@@ -55,7 +52,7 @@ def test3(message):
     markup.add(btn1)
     markup.add(btn2)
     markup.add(btn3)
-    bot.send_message(message.chat.id, newf[4], reply_markup=markup)
+    bot.send_photo(message.chat.id, photo="https://a-z-animals.com/media/2022/05/Best-dog-allergy-tests-header.jpg", caption=newf[4], reply_markup=markup)
     bot.register_next_step_handler(message, test4)
 
 
@@ -67,7 +64,7 @@ def test4(message):
     markup.add(btn1)
     markup.add(btn2)
     markup.add(btn3)
-    bot.send_message(message.chat.id, newf[5], reply_markup=markup)
+    bot.send_photo(message.chat.id, photo="https://ratatum.com/wp-content/uploads/2017/08/1429737953_smart-kezhual-2.jpg", caption=newf[5], reply_markup=markup)
     bot.register_next_step_handler(message, test5)
 
 
@@ -79,7 +76,7 @@ def test5(message):
     markup.add(btn1)
     markup.add(btn2)
     markup.add(btn3)
-    bot.send_message(message.chat.id, newf[6], reply_markup=markup)
+    bot.send_photo(message.chat.id, photo="https://www.factroom.ru/wp-content/uploads/2015/04/Depositphotos_30671459_m.jpg", caption=newf[6], reply_markup=markup)
     bot.register_next_step_handler(message, summarize)
 
 
