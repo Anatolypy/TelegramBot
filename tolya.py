@@ -1,38 +1,49 @@
 import telebot
 import sqlite3
+import os
+import root
+from dotenv import load_dotenv
 
-bot = telebot.TeleBot('6979060436:AAF9J29cBCUadUi5dp2Dq7g1HUzr1CzdKtc')
-file = open('phrases.txt', encoding='utf-8')
-f = file.read()
-newf = f.split("\n")
+load_dotenv('bot_config/token.env')
 
-ans1 = None
-ans2 = None
-ans3 = None
-ans4 = None
-ans5 = None
+bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
+
+questions_list = []
+
+with open('phrases.txt', encoding='utf-8') as questions:
+    read_questions = questions.read()
+    questions_list.append(read_questions.split("\n"))
+print(questions_list)
+
+database = root.Database(os.getenv('sql_name'))
+database.Connection()
 
 
-@bot.message_handler(commands=['start'])
+@bot.message_handler(commands=['start', 'help'])
 def main(message):
-    conn = sqlite3.connect('tolya.sql')
-    cur = conn.cursor()
-    cur.execute(
-        '''CREATE TABLE IF NOT EXISTS users (id auto_increment primary key, name varchar(50), name_id varchar(50))''')
-    conn.commit()
-    cur.close()
-    conn.close()
-    bot.send_message(message.chat.id, f'Привет {message.from_user.first_name} {message.from_user.last_name}')
-    bot.send_message(message.chat.id, newf[0])
-    bot.register_next_step_handler(message, test1)
+    btn_yes = telebot.types.InlineKeyboardButton('Да', callback_data='answer_yes')
+    btn_no = telebot.types.InlineKeyboardButton('Нет', callback_data='answer_no')
+    keyboard_select = telebot.types.InlineKeyboardMarkup()
+    keyboard_select.add(btn_yes, btn_no)
 
-
-@bot.message_handler(content_types=['text'])
-def main(message):
-    if message.text.lower() == 'нет':
-        bot.send_message(message.chat.id, 'Ну хорошо, до скорого')
+    if (message.from_user.last_name is not None):
+        bot.send_message(message.chat.id, f'Привет {message.from_user.first_name} {message.from_user.last_name}')
     else:
-        bot.register_next_step_handler(message, test1)
+        bot.send_message(message.chat.id, f'Привет {message.from_user.first_name}')
+    bot.send_message(message.chat.id, questions_list[0][0], reply_markup=keyboard_select)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'answer_yes')
+def next_up(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text="Поехали!",
+                          reply_markup=None)
+    test1(call.message)
+
+
+@bot.callback_query_handler(func=lambda call: call.data == 'answer_no')
+def down_up(call):
+    bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                          text="Ладно, в следующий раз ;(", reply_markup=None)
 
 
 def test1(message):
@@ -43,8 +54,9 @@ def test1(message):
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
     markup.add(btn1, btn2)
     markup.add(btn3, btn4)
+    bot.send_message(message.chat.id, "И так начнём, первый вопрос.")
     bot.send_photo(message.chat.id, photo="https://i.artfile.ru/3000x2000_811359_%5Bwww.ArtFile.ru%5D.jpg",
-                   caption=newf[2], reply_markup=markup)
+                   caption=questions_list[0][2], reply_markup=markup)
     bot.register_next_step_handler(message, test2)
 
 
@@ -58,7 +70,7 @@ def test2(message):
     markup.add(btn3)
     bot.send_photo(message.chat.id,
                    photo="https://thenewsgod.com/wp-content/uploads/2021/08/load-image-2021-08-01T115912.108.jpeg",
-                   caption=newf[3], reply_markup=markup)
+                   caption=questions_list[0][3], reply_markup=markup)
     bot.register_next_step_handler(message, test3)
 
 
@@ -71,7 +83,7 @@ def test3(message):
     markup.add(btn2)
     markup.add(btn3)
     bot.send_photo(message.chat.id, photo="https://a-z-animals.com/media/2022/05/Best-dog-allergy-tests-header.jpg",
-                   caption=newf[4], reply_markup=markup)
+                   caption=questions_list[0][4], reply_markup=markup)
     bot.register_next_step_handler(message, test4)
 
 
@@ -85,7 +97,7 @@ def test4(message):
     markup.add(btn3)
     bot.send_photo(message.chat.id,
                    photo="https://ratatum.com/wp-content/uploads/2017/08/1429737953_smart-kezhual-2.jpg",
-                   caption=newf[5], reply_markup=markup)
+                   caption=questions_list[0][5], reply_markup=markup)
     bot.register_next_step_handler(message, test5)
 
 
@@ -99,29 +111,15 @@ def test5(message):
     markup.add(btn3)
     bot.send_photo(message.chat.id,
                    photo="https://www.factroom.ru/wp-content/uploads/2015/04/Depositphotos_30671459_m.jpg",
-                   caption=newf[6], reply_markup=markup)
+                   caption=questions_list[0][6], reply_markup=markup)
     bot.register_next_step_handler(message, end)
 
 
 def end(message):
-    conn = sqlite3.connect('tolya.sql')
-    cur = conn.cursor()
-    cur.execute(
-        f'''INSERT INTO users (name, name_id) VALUES ('{message.from_user.first_name}', '{message.from_user.id}')''')
-    conn.commit()
-    cur.execute('''SELECT * FROM users''')
-    users = cur.fetchall()
-    info = f'Кто уже прошел тест:\n'
-    for el in users:
-        info += f'Name: {el[1]} ID: {el[2]}\n'
-    cur.close()
-    conn.close()
-    bot.send_message(message.chat.id, info)
+    last_info = database.EndOfTask(message)
+    bot.send_message(message.chat.id, "Люди которые прошли тест")
+    bot.send_message(message.chat.id, last_info)
 
 
-@bot.message_handler(commands=['help'])
-def main(message):
-    bot.send_message(message.chat.id, 'Я пока не могу помогать')
-
-
-bot.polling(none_stop=True)
+if __name__ == '__main__':
+    bot.infinity_polling()
