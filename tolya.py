@@ -1,12 +1,12 @@
 import telebot
-import sqlite3
 import os
-import root
+import roots
 from dotenv import load_dotenv
 
 load_dotenv('bot_config/token.env')
 
 bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
+c = []
 
 questions_list = []
 
@@ -15,7 +15,7 @@ with open('phrases.txt', encoding='utf-8') as questions:
     questions_list.append(read_questions.split("\n"))
 print(questions_list)
 
-database = root.Database(os.getenv('sql_name'))
+database = roots.Database(os.getenv('sql_name'))
 database.Connection()
 
 
@@ -57,7 +57,12 @@ def test1(message):
     bot.send_message(message.chat.id, "И так начнём, первый вопрос.")
     bot.send_photo(message.chat.id, photo="https://i.artfile.ru/3000x2000_811359_%5Bwww.ArtFile.ru%5D.jpg",
                    caption=questions_list[0][2], reply_markup=markup)
-    bot.register_next_step_handler(message, test2)
+
+
+@bot.message_handler(content_types=['text'])
+def message(message):
+    c.append(message.text)
+    test2(message)
 
 
 def test2(message):
@@ -74,6 +79,12 @@ def test2(message):
     bot.register_next_step_handler(message, test3)
 
 
+@bot.message_handler(content_types=['text'])
+def message(message):
+    c.append(message.text)
+    test3(message)
+
+
 def test3(message):
     btn1 = telebot.types.KeyboardButton('Кошки')
     btn2 = telebot.types.KeyboardButton('Собаки')
@@ -85,6 +96,12 @@ def test3(message):
     bot.send_photo(message.chat.id, photo="https://a-z-animals.com/media/2022/05/Best-dog-allergy-tests-header.jpg",
                    caption=questions_list[0][4], reply_markup=markup)
     bot.register_next_step_handler(message, test4)
+
+
+@bot.message_handler(content_types=['text'])
+def message(message):
+    c.append(message.text)
+    test4(message)
 
 
 def test4(message):
@@ -101,6 +118,12 @@ def test4(message):
     bot.register_next_step_handler(message, test5)
 
 
+@bot.message_handler(content_types=['text'])
+def message(message):
+    c.append(message.text)
+    test5(message)
+
+
 def test5(message):
     btn1 = telebot.types.KeyboardButton('Читаю')
     btn2 = telebot.types.KeyboardButton('Играю в компьютерные игры')
@@ -115,10 +138,17 @@ def test5(message):
     bot.register_next_step_handler(message, end)
 
 
+@bot.message_handler(content_types=['text'])
+def message(message):
+    c.append(message.text)
+    end(message)
+
+
 def end(message):
     last_info = database.EndOfTask(message)
     bot.send_message(message.chat.id, "Люди которые прошли тест")
     bot.send_message(message.chat.id, last_info)
+    print(c)
 
 
 if __name__ == '__main__':
