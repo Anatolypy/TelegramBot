@@ -1,13 +1,22 @@
+import random
+
 import telebot
 import os
 import roots
 from dotenv import load_dotenv
+import answers
 
 load_dotenv('bot_config/token.env')
 
 bot = telebot.TeleBot(os.getenv('BOT_TOKEN'))
 c = []
-
+answ1 = None
+answ2 = None
+answ3 = None
+answ4 = None
+answ5 = None
+sigma = None
+num = 0
 questions_list = []
 
 with open('phrases.txt', encoding='utf-8') as questions:
@@ -50,19 +59,15 @@ def test1(message):
     btn1 = telebot.types.KeyboardButton('Мясо')
     btn2 = telebot.types.KeyboardButton('Рыба')
     btn3 = telebot.types.KeyboardButton('Морепродукты')
-    btn4 = telebot.types.KeyboardButton('Другое')
     markup = telebot.types.ReplyKeyboardMarkup(resize_keyboard=True)
-    markup.add(btn1, btn2)
-    markup.add(btn3, btn4)
+    markup.add(btn1)
+    markup.add(btn2)
+    markup.add(btn3)
     bot.send_message(message.chat.id, "И так начнём, первый вопрос.")
     bot.send_photo(message.chat.id, photo="https://i.artfile.ru/3000x2000_811359_%5Bwww.ArtFile.ru%5D.jpg",
                    caption=questions_list[0][2], reply_markup=markup)
 
-
-@bot.message_handler(content_types=['text'])
-def message(message):
-    c.append(message.text)
-    test2(message)
+    bot.register_next_step_handler(message, test2)
 
 
 def test2(message):
@@ -77,12 +82,8 @@ def test2(message):
                    photo="https://thenewsgod.com/wp-content/uploads/2021/08/load-image-2021-08-01T115912.108.jpeg",
                    caption=questions_list[0][3], reply_markup=markup)
     bot.register_next_step_handler(message, test3)
-
-
-@bot.message_handler(content_types=['text'])
-def message(message):
-    c.append(message.text)
-    test3(message)
+    global answ1
+    answ1 = message.text
 
 
 def test3(message):
@@ -96,12 +97,8 @@ def test3(message):
     bot.send_photo(message.chat.id, photo="https://a-z-animals.com/media/2022/05/Best-dog-allergy-tests-header.jpg",
                    caption=questions_list[0][4], reply_markup=markup)
     bot.register_next_step_handler(message, test4)
-
-
-@bot.message_handler(content_types=['text'])
-def message(message):
-    c.append(message.text)
-    test4(message)
+    global answ2
+    answ2 = message.text
 
 
 def test4(message):
@@ -116,12 +113,8 @@ def test4(message):
                    photo="https://ratatum.com/wp-content/uploads/2017/08/1429737953_smart-kezhual-2.jpg",
                    caption=questions_list[0][5], reply_markup=markup)
     bot.register_next_step_handler(message, test5)
-
-
-@bot.message_handler(content_types=['text'])
-def message(message):
-    c.append(message.text)
-    test5(message)
+    global answ3
+    answ3 = message.text
 
 
 def test5(message):
@@ -136,19 +129,36 @@ def test5(message):
                    photo="https://www.factroom.ru/wp-content/uploads/2015/04/Depositphotos_30671459_m.jpg",
                    caption=questions_list[0][6], reply_markup=markup)
     bot.register_next_step_handler(message, end)
-
-
-@bot.message_handler(content_types=['text'])
-def message(message):
-    c.append(message.text)
-    end(message)
+    global answ4
+    answ4 = message.text
 
 
 def end(message):
     last_info = database.EndOfTask(message)
+    global answ5
+    answ5 = message.text
+    global sigma
+    global num
+    a = answers.question1[answ1]
+    a2 = answers.question2[answ2]
+    a3 = answers.question3[answ3]
+    a4 = answers.question4[answ4]
+    a5 = answers.question5[answ5]
+    summa = (a + a2 + a3 + a4 + a5) // 15
+    if 0 < summa <= 10:
+        num = 1
+        sigma = random.choice(answers.group1)
+    elif 10 < summa <= 20:
+        num = 2
+        sigma = random.choice(answers.group2)
+    else:
+        num = 3
+        sigma = random.choice(answers.group3)
+    bot.send_photo(message.chat.id,
+                   photo=answers.sigmas[num][sigma],
+                   caption=f"Поздравляю! Вы <b>{sigma}</b>!", parse_mode="HTML")
     bot.send_message(message.chat.id, "Люди которые прошли тест")
     bot.send_message(message.chat.id, last_info)
-    print(c)
 
 
 if __name__ == '__main__':
