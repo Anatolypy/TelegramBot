@@ -24,10 +24,8 @@ class Database:
         users = cur.fetchall()
         info = ''
         for el in users:
-            info += f'Name: {el[1]}'
+            info += f'Name: {el[1]}\n'
         cur.close()
         conn.close()
         return info
 
-    def Result(self, message):
-        print('Вы скуф')
